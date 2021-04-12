@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import File, UploadFile
 from pydantic import BaseModel, UUID4
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 from .user import User
 from .category import Category
@@ -19,6 +19,7 @@ class Job(BaseModel):
     category: Optional[Category] = None
     geolocation: Optional[Geolocation] = None
     created_at: Optional[datetime]
+    favorite_users_ids: List[str] = []
 
 class JobBD(BaseModel):
     id: Optional[str] = None

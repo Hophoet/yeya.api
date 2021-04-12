@@ -21,6 +21,7 @@ from pydantic import EmailStr
 from random import choice 
 from string import digits
 from src.utils.email import send_forgot_password_email_async
+from src.endpoints.setup import ENDPOINT
 import pdb
 
 @app.post('/user/set-image')
@@ -142,7 +143,7 @@ async def verify_password_reset(
 
 
 
-@app.put('/user/update')
+@app.put(ENDPOINT+'/user/update')
 async def update_user_infos(
     response: Response,
     serializer: UpdateUserInfosSerializer,

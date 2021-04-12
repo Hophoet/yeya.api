@@ -24,7 +24,7 @@ from src.utils.email import send_forgot_password_email_async
 from src.endpoints.setup import ENDPOINT
 import pdb
 
-@app.post('/user/set-image')
+@app.post(ENDPOINT+'/user/set-image')
 async def set_user_profile_image(
     response: Response,
     image: UploadFile = File(...),

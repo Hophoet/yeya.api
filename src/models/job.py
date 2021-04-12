@@ -27,7 +27,7 @@ class JobBD(BaseModel):
     description: str
     price: int
     city_id: str
-    user_id: Optional[UUID4] = None
+    user_id: str
     category_id: Optional[str] = None
     geolocation_id : Optional[str] = None
     created_at:Optional[datetime] = datetime.now()

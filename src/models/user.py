@@ -1,8 +1,11 @@
 from fastapi_users import FastAPIUsers, models
+from typing import Optional
 
 
 class User(models.BaseUser, models.BaseOAuthAccountMixin):
-    pass
+    image:Optional[str] = None
+    
+
 
 
 class UserCreate(models.BaseUserCreate):

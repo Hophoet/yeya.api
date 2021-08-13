@@ -1,10 +1,11 @@
 from fastapi_users import FastAPIUsers, models
 from typing import Optional
+from src.models.image import Image
+
 
 
 class User(models.BaseUser, models.BaseOAuthAccountMixin):
-    image:Optional[str] = None
-    
+    image:Optional[Image] = None
 
 
 

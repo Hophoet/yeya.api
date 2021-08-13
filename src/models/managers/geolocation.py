@@ -1,6 +1,6 @@
 from typing import List
 from src.database.manager import DBManager
-from src.models.geolocation import Geolocation, GeolocationDB
+from src.models.geolocation import Geolocation, GeolocationDB, GeolocationDBUpdate
 from fastapi.encoders import jsonable_encoder
 from bson import ObjectId
 import pdb
@@ -58,12 +58,12 @@ class GeolocationManager(DBManager):
             '_id': ObjectId(category_id)
         })
         
-    async def update_geolocation(self, geolocation_id:int, geolocation_db:GeolocationDB) -> Geolocation:
+    async def update(self, geolocation_id:int, geolocation_db_update:GeolocationDBUpdate) -> Geolocation:
         await self.connect_to_database()
         geolocation:Geolocation = await self.db['geolocations'].find_one({'_id':ObjectId(geolocation_id)})
         if geolocation:
             updated_geolocation =  await self.db['geolocations'].update_one(
-                {'_id': ObjectId(geolocation_id)}, {'$set': jsonable_encoder(geolocation_db)}
+                {'_id': ObjectId(geolocation_id)}, {'$set': jsonable_encoder(geolocation_db_update)}
             )
             if updated_geolocation:
                 updated_geolocation = await self.db['geolocations'].find_one({'_id':ObjectId(geolocation_id)})

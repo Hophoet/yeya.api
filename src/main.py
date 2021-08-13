@@ -5,6 +5,8 @@ from httpx_oauth.clients.google import GoogleOAuth2
 from src.models.user import (UserDB, User, UserCreate, UserUpdate)
 from src.database.setup import (SECRET, user_db, db)
 from src.endpoints.setup import app, google_oauth_client, fastapi_users, jwt_authentication
+from src.endpoints.user import set_user_profile_image
+from src.endpoints.category import *
 
 
 def on_after_register(user: UserDB, request: Request):

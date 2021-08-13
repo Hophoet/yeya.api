@@ -8,6 +8,8 @@ from src.endpoints.auth import CustomJWTAuthentication
 
 app = FastAPI()
 
+ENDPOINT = '/api/v1'
+
 google_oauth_client = GoogleOAuth2("CLIENT_ID", "CLIENT_SECRET")
 jwt_authentication = CustomJWTAuthentication(
     secret=SECRET, lifetime_seconds=3013600, tokenUrl="/auth/jwt/login", 

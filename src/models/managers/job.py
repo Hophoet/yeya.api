@@ -4,7 +4,7 @@ from src.models.user import User
 from src.database.manager import DBManager
 from src.database.setup import user_db
 from src.models.geolocation import Geolocation, GeolocationDB
-from src.models.job import Job, JobBD
+from src.models.job import Job, JobBD, JobUpdate, JobDBUpdate
 from src.models.managers.geolocation import GeolocationManager
 from src.models.managers.category import CategoryManager
 from src.models.managers.user import UserManager
@@ -62,6 +62,8 @@ class JobManager(DBManager):
         await self.connect_to_database()
         geolocation:Geolocation = None
         category:Category = None
+        if job_db.user_id is None:
+            raise Exception('User id is required for job creation')
         if job_db.geolocation_id:
             geolocation = await self.geolocation_manager.get_geolocation(job_db.geolocation_id)
         if job_db.category_id:
@@ -82,18 +84,24 @@ class JobManager(DBManager):
             '_id': ObjectId(job_id)
         })
         
-    async def update_job(self, job_id:int, job_db:JobBD) -> Job:
+    async def update(self, job_id:str, job_db_update:JobDBUpdate) -> Job:
         await self.connect_to_database()
-        job:Job = await self.db['jobs'].find_one({'_id':ObjectId(job_id)})
-        if job is None:
-            raise Exception('job not found')
-        geolocation:Geolocation = await self.db['geolocations'].find_one({'_id':ObjectId(job_db.geolocation_id)})
-        category:Category = await self.db['geolocations'].find_one({'_id':ObjectId(job_db.geolocation_id)})
-        if category is None:
-            raise Exception('category not found')
+        geolocation:Geolocation = None
+        category:Category = None
+        if job_db_update.geolocation_id:
+            geolocation = await self.geolocation_manager.get_geolocation(job_db_update.geolocation_id)
+        if job_db_update.category_id:
+            category = await self.category_manager.get_category(job_db_update.category_id) #self.db['categories'].find_one({'_id':ObjectId(job_db.category_id)})
+        data = { 
+            'category_id':job_db_update.category_id,
+            'title':job_db_update.title,
+            'description':job_db_update.description
+        }
+        if job_db_update.geolocation_id:
+            data['geolocation_id'] = job_db_update.geolocation_id
         updated_job =  await self.db['jobs'].update_one(
-            {'_id': ObjectId(job_id)}, {'$set': jsonable_encoder(job_db)}
+            {'_id': ObjectId(job_id)}, {'$set': data}
         )
         if updated_job:
             updated_job = await self.db['jobs'].find_one({'_id':ObjectId(job_id)})
-            return  self.serializeOne(updated_job)
+            return await self.serializeOne(updated_job)

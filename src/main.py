@@ -7,6 +7,7 @@ from src.database.setup import (SECRET, user_db, db)
 from src.endpoints.setup import app, google_oauth_client, fastapi_users, jwt_authentication
 from src.endpoints.user import set_user_profile_image
 from src.endpoints.category import *
+from src.endpoints.job import get_jobs, get_job, insert_job
 
 
 def on_after_register(user: UserDB, request: Request):

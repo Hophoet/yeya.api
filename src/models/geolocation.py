@@ -20,6 +20,11 @@ class GeolocationDB(BaseModel):
     created_at:Optional[datetime] = datetime.now()
     last_updated_at:Optional[datetime] = datetime.now()
 
+class GeolocationDBUpdate(BaseModel):
+    latitude: float
+    longitude: float
+    last_updated_at:Optional[datetime] = datetime.now()
+
 class GeolocationCreate(BaseModel):
     latitude: float
     longitude: float

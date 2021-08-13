@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 import fastapi_users
 from src.database.manager import DBManager
@@ -12,13 +13,8 @@ from bson import ObjectId
 class UserManager(DBManager):
     """ Category model requests manager """
     
-    async def delete_category(self, category_id:str):
-        """ delete category by id request """
-        await self.connect_to_database()
-        await self.db['categories'].delete_one({
-            '_id': ObjectId(category_id)
-        })
-        
+    def __init__(self):
+        super(UserManager, self).__init__()
 
     async def set_user_image(self, image:Image, email:str=None, id: UUID4=None) -> User:
         await self.connect_to_database()
@@ -38,3 +34,21 @@ class UserManager(DBManager):
                 }
         else:
             print('user not  found')
+
+    async def get_user(self, user_id:UUID4) -> User:
+        """ get geolocation by id request """
+        await self.connect_to_database()
+        print('USER ID', user_id)
+        self.db['users'].create_index("id", unique=True)
+        user_db = await self.db['users'].find_one({
+            'id': user_id
+        })
+        print('USER GETTED',user_db)
+        return user_db if user_db else None
+
+    async def get_user_by_email(self, email:str) -> User:
+        """ get user by id request """
+        await self.connect_to_database()
+        user_db = await self.db['users'].find_one({'email':email})
+        if user_db:
+            return user_db

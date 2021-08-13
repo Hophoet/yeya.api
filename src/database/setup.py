@@ -7,7 +7,7 @@ from src.models.user import UserDB
 PASSWORD = "dCzClVpE6BMOeeWX"
 DATABASE_URL = "mongodb://localhost:27017"
 # DATABASE_URL=f"mongodb://hophoet:{PASSWORD}@livrimdb-shard-00-00.p0thu.mongodb.net:27017,livrimdb-shard-00-01.p0thu.mongodb.net:27017,livrimdb-shard-00-02.p0thu.mongodb.net:27017/livrimdb?ssl=true&replicaSet=atlas-s5l1sw-shard-0&authSource=admin&retryWrites=true&w=majority"
-DATABASE_NAME = 'livrimdb'
+DATABASE_NAME = 'yeyadb'
 SECRET = "SECRET"
 
 client = motor.motor_asyncio.AsyncIOMotorClient(

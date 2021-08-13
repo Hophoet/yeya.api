@@ -21,13 +21,26 @@ class JobBD(BaseModel):
     id: Optional[str] = None
     title: str
     description: str
-    user_id: UUID4
+    user_id: Optional[UUID4] = None
     category_id: Optional[str] = None
     geolocation_id : Optional[str] = None
     created_at:Optional[datetime] = datetime.now()
 
+class JobDBUpdate(BaseModel):
+    title: str
+    description: str
+    category_id: Optional[str]
+    geolocation_id : Optional[str] = None
+
 class JobCreate(BaseModel):
     title: str
     description: str
-    category_id: Optional[str] = None
+    category_id: Optional[str]
+    geolocation: Optional[GeolocationCreate] = None
+
+class JobUpdate(BaseModel):
+    id: str
+    title: str
+    description: str
+    category_id: Optional[str]
     geolocation: Optional[GeolocationCreate] = None

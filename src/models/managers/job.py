@@ -3,7 +3,7 @@ from src.models.category import Category
 from src.models.user import User
 from src.database.manager import DBManager
 from src.database.setup import user_db
-from src.models.geolocation import Geolocation, GeolocationDB
+from src.models.geolocation import Geolocation, GeolocationDB, GeolocationDBUpdate
 from src.models.job import Job, JobBD, JobUpdate, JobDBUpdate
 from src.models.managers.geolocation import GeolocationManager
 from src.models.managers.category import CategoryManager
@@ -101,6 +101,30 @@ class JobManager(DBManager):
             data['geolocation_id'] = job_db_update.geolocation_id
         updated_job =  await self.db['jobs'].update_one(
             {'_id': ObjectId(job_id)}, {'$set': data}
+        )
+        if updated_job:
+            updated_job = await self.db['jobs'].find_one({'_id':ObjectId(job_id)})
+            return await self.serializeOne(updated_job)
+        
+    async def set_location(self, job_id:str, geolocation_db_update:GeolocationDBUpdate) -> Job:
+        await self.connect_to_database()
+        job_db:JobBD = await self.db['jobs'].find_one({
+            '_id': ObjectId(job_id)
+        })
+        geolocation_db:GeolocationDB = None
+        if job_db.get('geolocation_id'):
+            geolocation_db = await self.geolocation_manager.update(
+                job_db.get('geolocation_id'), 
+                geolocation_db_update)
+        else :
+            geolocation_db = await self.geolocation_manager.insert_geolocation(
+                GeolocationDB(
+                    latitude=geolocation_db_update.latitude,
+                    longitude=geolocation_db_update.longitude)
+            )
+        job_updated_data = {'geolocation_id':geolocation_db.id}
+        updated_job =  await self.db['jobs'].update_one(
+            {'_id': ObjectId(job_id)}, {'$set': job_updated_data}
         )
         if updated_job:
             updated_job = await self.db['jobs'].find_one({'_id':ObjectId(job_id)})

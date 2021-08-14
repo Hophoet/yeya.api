@@ -63,7 +63,6 @@ async def insert_category(
     return created_category
 
 
-
 @app.put(ENDPOINT+'/category/{category_id}/update', status_code=status.HTTP_200_OK)
 async def update_category(
     response: Response,
@@ -72,6 +71,13 @@ async def update_category(
     user: User = Depends(fastapi_users.current_user()), 
     category_manager: CategoryManager = Depends(CategoryManager)
 ):
+    if(not user.is_superuser):
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {
+            'status':status.HTTP_401_UNAUTHORIZED,
+            'code':'category/update-unauthorized',
+            'message': 'Unauthorized to update category'
+        }
     category = await  category_manager.get_category(category_id)
     if not category:
         #category not found case
@@ -86,3 +92,30 @@ async def update_category(
         category_db=category_db
     )
     return updated_category
+
+@app.delete(ENDPOINT+'/category/{category_id}/delete', status_code=status.HTTP_200_OK)
+async def delete_category(
+    response: Response,
+    category_id:str,
+    user: User = Depends(fastapi_users.current_user()), 
+    category_manager: CategoryManager = Depends(CategoryManager),
+):
+    if(not user.is_superuser):
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {
+            'status':status.HTTP_401_UNAUTHORIZED,
+            'code':'category/update-unauthorized',
+            'message': 'Unauthorized to update category'
+        }
+    category:Category = await category_manager.get_category(category_id)
+    if not category:
+        #category not found case
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'category/not-found',
+            'message': 'category not found'
+        }
+    if await category_manager.delete_category(category_id):
+        response.status_code = status.HTTP_200_OK
+        return 

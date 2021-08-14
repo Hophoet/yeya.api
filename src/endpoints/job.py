@@ -171,3 +171,30 @@ async def delete_job(
     if await job_manager.delete_job(job_id=job.id):
         response.status_code = status.HTTP_200_OK
         return 
+
+@app.put(ENDPOINT+'/job/{job_id}/set-geolocation', status_code=status.HTTP_200_OK)
+async def set_job_geolocation(
+    response: Response,
+    job_id: str,
+    geolocation_db_update:GeolocationDBUpdate,
+    user: User = Depends(fastapi_users.current_user()), 
+    job_manager: JobManager = Depends(JobManager),
+    geolocation_manager: GeolocationManager = Depends(GeolocationManager),
+):
+    job:Job = await job_manager.get_job(job_id)
+    if job.user.id != user.id:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'job/update/not-authorized',
+            'message': 'job geolocation update not authorized'
+        }
+    if job is None:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'job/not-found',
+            'message': 'job not found'
+        }
+    job = await job_manager.set_location(job_id=job.id, geolocation_db_update=geolocation_db_update) #update(job.id, job_db_update=job_db_update)
+    return job

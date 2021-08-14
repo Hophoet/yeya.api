@@ -135,3 +135,39 @@ async def update_job(
     updated_job = await job_manager.update(job_update.id, job_db_update=job_db_update)
     return updated_job
 
+
+@app.delete(ENDPOINT+'/job/{job_id}/delete', status_code=status.HTTP_200_OK)
+async def delete_job(
+    response: Response,
+    job_id:str,
+    user: User = Depends(fastapi_users.current_user()), 
+    job_manager: JobManager = Depends(JobManager),
+):
+
+    job:Job = await job_manager.get_job(job_id)
+    if not job:
+        #job not found case
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'job/not-found',
+            'message': 'job not found'
+        }
+
+    if job.user.id != user.id:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'job/update/not-authorized',
+            'message': 'job update not authorized'
+        }
+    if job is None:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'job/not-found',
+            'message': 'job not found'
+        }
+    if await job_manager.delete_job(job_id=job.id):
+        response.status_code = status.HTTP_200_OK
+        return 

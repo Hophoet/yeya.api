@@ -86,6 +86,13 @@ async def update_job(
     geolocation_manager: GeolocationManager = Depends(GeolocationManager),
 ):
     job:Job = await job_manager.get_job(job_update.id)
+    if job.user.id != user.id:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'job/update/not-authorized',
+            'message': 'job update not authorized'
+        }
     if job is None:
         response.status_code = status.HTTP_404_NOT_FOUND
         return {

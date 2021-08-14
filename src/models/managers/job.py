@@ -105,3 +105,12 @@ class JobManager(DBManager):
         if updated_job:
             updated_job = await self.db['jobs'].find_one({'_id':ObjectId(job_id)})
             return await self.serializeOne(updated_job)
+        
+
+    async def delete_job(self, job_id:str):
+        """ delete job by id request """
+        await self.connect_to_database()
+        await self.db['jobs'].delete_one({
+            '_id': ObjectId(job_id)
+        })
+        

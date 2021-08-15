@@ -5,6 +5,7 @@ from src.models.category import Category, CategoryDB
 from src.models.chat import (
     ChatConversation,
     ChatConversationDB,
+    ChatConversationrRequestResponse,
     ChatMessageDB,
     SendChatMessageManagerData, 
     CreateChatConversationManagerData, 
@@ -56,6 +57,23 @@ class ChatManager(DBManager):
             read=message_q['read']
         )
         return chat_message
+
+    async def serializeJustMessage(self, message_q):
+        """ message serializer """
+        chat_conversation:ChatConversation = await self.get_conversation(message_q['chat_conversation_id'])
+        sender: User = await user_db.get(
+           UUID(message_q['sender_id']))
+        receiver: User = await user_db.get(
+            UUID(message_q['receiver_id']))
+        return {
+            'id':str(message_q['_id']),
+            'text':str(message_q['text']),
+            'image':str(message_q['image']),
+            'receiver':receiver,    
+            'sender':receiver,    
+            'created_at':str(message_q['created_at']),
+            'read':str(message_q['read']),
+        }
 
     async def serializeMany(self, categories_db:List[CategoryDB]) -> List[Category]:
         """ category serializer """
@@ -131,6 +149,45 @@ class ChatManager(DBManager):
                 )
                 return await self.serializeMessage(chat_message)
         
+    async def get_conversation_messages(self, conversation_id:str) -> List[ChatMessage]:
+        """ get conversation by id request """
+        await self.connect_to_database()
+        messages_qs:List[any]= self.db['chatMessages'].find({
+            'chat_conversation_id': str(conversation_id)
+        })
+        messages:List[any] = []
+        async for message_q in messages_qs:
+            messages.append(
+                await self.serializeJustMessage(message_q))
+        return messages
+
+
+    async def get_conversation_with_messages(self, conversation_id:str) -> List[ChatMessage]:
+        """ get conversation by id request """
+        await self.connect_to_database()
+        conversation_q = await self.db['chatConversations'].find_one({
+            '_id': ObjectId(conversation_id)
+        })
+        conversation:ChatConversation = await self.get_conversation(conversation_id)
+        messages:List[any] = await self.get_conversation_messages(conversation_q['_id'])
+        conversation:ChatConversationrRequestResponse = ChatConversationrRequestResponse(
+            id=conversation.id,
+            user1=conversation.user1,
+            user2=conversation.user2,
+            messages=messages,
+            created_at=conversation.created_at
+        )
+        return conversation
+
+    
+    async def get_message(self, message_id:str) -> Category:
+        """ get message by id request """
+        await self.connect_to_database()
+        message_q = await self.db['chatMessages'].find_one({
+            '_id': ObjectId(message_id)
+        })
+        if  message_q:
+            return await self.serializeMessage(message_q)
 
     async def get_conversation(self, conversation_id:str) -> Category:
         """ get conversation by id request """

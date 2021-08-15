@@ -5,7 +5,7 @@ from src.models.managers.chat import ChatManager
 from src.models.managers.job import JobManager
 from src.models.managers.geolocation import GeolocationManager
 from src.models.managers.user import UserManager
-from src.models.chat import SendChatMessageManagerData
+from src.models.chat import ChatConversation, ChatConversationrRequestResponse, SendChatMessageManagerData
 from src.endpoints.setup import app, fastapi_users
 from src.models.user import User
 from src.models.chat import SendChatMessageSerializer
@@ -28,23 +28,24 @@ async def get_jobs(
     return jobs
 
 
-@app.get(ENDPOINT+'/chat/{job_id}', status_code=status.HTTP_200_OK)
-async def get_job(
+@app.get(ENDPOINT+'/chat/conversation/{conversation_id}', status_code=status.HTTP_200_OK)
+async def get_chat_conversation(
     response: Response,
-    job_id:str,
+    conversation_id:str,
     user: User = Depends(fastapi_users.current_user()), 
-    job_manager: JobManager = Depends(JobManager)
+    chat_manager: ChatManager = Depends(ChatManager)
 ):
-    job = await  job_manager.get_job(job_id)
-    if not job:
-        #job not found case
+    chat_conversation:ChatConversationrRequestResponse = await  chat_manager.get_conversation_with_messages(conversation_id=conversation_id)
+    if not chat_conversation:
+        #chat conversation not found case
         response.status_code = status.HTTP_404_NOT_FOUND
         return {
             'status':status.HTTP_404_NOT_FOUND,
-            'code':'job/not-found',
-            'message': 'job not found'
+            'code':'chat-conversation/not-found',
+            'message': 'chat conversation not found'
         }
-    return job
+    return chat_conversation
+
 
 @app.post(ENDPOINT+'/chat/send-message')
 async def send_chat_message(

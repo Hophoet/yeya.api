@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, UUID4
-from typing import Optional
+from typing import Optional, List
 from .user import User
 from pydantic import UUID4, BaseModel, EmailStr, validator
 from uuid import UUID
@@ -34,6 +34,14 @@ class ChatMessageDB(BaseModel):
     read:  Optional[bool] = False
     created_at: Optional[datetime]
 
+
+class ChatConversationrRequestResponse(BaseModel):
+    """ model use to get conversation with all message"""
+    id: str = None
+    user1: User
+    user2: User
+    messages: List
+    created_at: Optional[datetime]
 
 class SendChatMessageSerializer(BaseModel):
     """ model for the endpoint method parameter"""

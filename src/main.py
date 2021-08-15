@@ -8,6 +8,7 @@ from src.endpoints.setup import app, google_oauth_client, fastapi_users, jwt_aut
 from src.endpoints.user import set_user_profile_image
 from src.endpoints.category import *
 from src.endpoints.job import get_jobs, get_job, insert_job
+from src.endpoints.chat import send_chat_message, get_chat_conversation
 
 
 def on_after_register(user: UserDB, request: Request):

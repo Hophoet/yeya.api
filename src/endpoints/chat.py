@@ -70,7 +70,6 @@ async def send_chat_message(
     # check the receiver id
     receiver = await user_db.get(
         id=UUID(serializer.receiver_id))
-    pdb.set_trace()
     if receiver is None:
         # receiver not found
         response.status_code = status.HTTP_404_NOT_FOUND
@@ -90,6 +89,43 @@ async def send_chat_message(
     )
     return chat_message
 
+
+@app.post(ENDPOINT+'/chat/conversation/{conversation_id}/read-messages')
+async def read_conversation_messages(
+    response: Response,
+    conversation_id:str,
+    serializer:SendChatMessageSerializer,
+    user: User = Depends(fastapi_users.current_user()), 
+    chat_manager = Depends(ChatManager)
+):
+    """ Endpoint to handle chat conversation message reading by and user"""
+    #
+    chat_conversation:ChatConversation = await  chat_manager.get_conversation(conversation_id=conversation_id)
+    if not chat_conversation:
+        #chat conversation not found case
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'chat-conversation/not-found',
+            'message': 'chat conversation not found'
+        }
+    if (
+        chat_conversation.user1.id !=  user.id and 
+        chat_conversation.user2.id != user.id):
+        # pdb.set_trace()
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'chat-conversation-read/unauthorized',
+            'message': 'chat conversation read not authorized'
+        }
+    
+        
+    result = await chat_manager.read_conversation_messages_by_receiver(
+        receiver_id=user.id,
+        conversation_id=conversation_id
+    )
+    return result
 
 @app.put(ENDPOINT+'/job/update', status_code=status.HTTP_200_OK)
 async def update_job(

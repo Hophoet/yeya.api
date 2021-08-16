@@ -7,7 +7,8 @@ from src.models.managers.geolocation import GeolocationManager
 from src.models.managers.user import UserManager
 from src.models.chat import (
     ChatConversation, 
-    ChatConversationRequestResponse, 
+    ChatConversationRequestResponse,
+    ChatMessage, 
     SendChatMessageManagerData
 )
 from src.endpoints.setup import app, fastapi_users
@@ -94,7 +95,6 @@ async def send_chat_message(
 async def read_conversation_messages(
     response: Response,
     conversation_id:str,
-    serializer:SendChatMessageSerializer,
     user: User = Depends(fastapi_users.current_user()), 
     chat_manager = Depends(ChatManager)
 ):
@@ -124,6 +124,38 @@ async def read_conversation_messages(
     result = await chat_manager.read_conversation_messages_by_receiver(
         receiver_id=user.id,
         conversation_id=conversation_id
+    )
+    return result
+
+@app.delete(ENDPOINT+'/chat/message/{message_id}/delete')
+async def delete_conversation_message_by_sender(
+    response: Response,
+    message_id:str,
+    user: User = Depends(fastapi_users.current_user()), 
+    chat_manager = Depends(ChatManager)
+):
+    """ Endpoint to handle chat conversation message reading by and user"""
+    #
+    chat_message:ChatMessage = await  chat_manager.get_message(message_id=message_id)
+    if not chat_message:
+        #chat message not found case
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'chat-message/not-found',
+            'message': 'chat message not found'
+        }
+    if (chat_message.sender.id !=  user.id):
+        # pdb.set_trace()
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'chat-message-delete/unauthorized',
+            'message': 'chat message delete not authorized'
+        }
+    result = await chat_manager.delete_message_by_sender(
+        sender_id=user.id,
+        message_id=message_id
     )
     return result
 

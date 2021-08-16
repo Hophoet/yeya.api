@@ -5,7 +5,7 @@ from src.models.category import Category, CategoryDB
 from src.models.chat import (
     ChatConversation,
     ChatConversationDB,
-    ChatConversationrRequestResponse,
+    ChatConversationRequestResponse,
     ChatMessageDB,
     SendChatMessageManagerData, 
     CreateChatConversationManagerData, 
@@ -39,6 +39,22 @@ class ChatManager(DBManager):
         )
         return chat_conversation
     
+    async def serializeConversationWithMessages(self, conversation_q):
+        """ conversation serializer """
+        user1:User = await user_db.get(
+            UUID(conversation_q['user1_id']))
+        user2:User = await user_db.get(
+            UUID(conversation_q['user2_id']))
+        messages:List[any] = await self.get_conversation_messages(conversation_q['_id'])
+        conversation:ChatConversationRequestResponse = ChatConversationRequestResponse(
+            id=str(conversation_q['_id']),
+            user1=user1,
+            user2=user2,
+            messages=messages,
+            created_at=str(conversation_q['created_at'])
+        )
+        return conversation
+
     async def serializeMessage(self, message_q):
         """ category serializer """
         sender: User = await user_db.get(
@@ -54,7 +70,7 @@ class ChatManager(DBManager):
             chat_conversation=chat_conversation,
             receiver=receiver,
             created_at=message_q['created_at'],
-            read=message_q['read']
+            read=bool(message_q['read'])
         )
         return chat_message
 
@@ -68,11 +84,11 @@ class ChatManager(DBManager):
         return {
             'id':str(message_q['_id']),
             'text':str(message_q['text']),
-            'image':str(message_q['image']),
+            'image':message_q['image'],
             'receiver':receiver,    
             'sender':receiver,    
             'created_at':str(message_q['created_at']),
-            'read':str(message_q['read']),
+            'read':message_q['read'],
         }
 
     async def serializeMany(self, categories_db:List[CategoryDB]) -> List[Category]:
@@ -162,6 +178,22 @@ class ChatManager(DBManager):
         return messages
 
 
+    async def get_user_conversations_with_messages(self, user_id:str) -> List[ChatConversationRequestResponse]:
+        """ get user conversations by user id request """
+        await self.connect_to_database()
+        conversation_qs:List = self.db['chatConversations'].find({
+            'user1_id': str(user_id),
+            # 'user2_id': str(user_id)
+        })
+        # pdb.set_trace()
+        conversations_rr:List[ChatConversationRequestResponse] = []
+        async for conversation_q in conversation_qs:
+            conversations_rr.append(
+                await self.serializeConversationWithMessages(conversation_q=conversation_q)
+            )
+        return conversations_rr
+        
+
     async def get_conversation_with_messages(self, conversation_id:str) -> List[ChatMessage]:
         """ get conversation by id request """
         await self.connect_to_database()
@@ -170,14 +202,14 @@ class ChatManager(DBManager):
         })
         conversation:ChatConversation = await self.get_conversation(conversation_id)
         messages:List[any] = await self.get_conversation_messages(conversation_q['_id'])
-        conversation:ChatConversationrRequestResponse = ChatConversationrRequestResponse(
+        conversation_rs:ChatConversationRequestResponse = ChatConversationRequestResponse(
             id=conversation.id,
             user1=conversation.user1,
             user2=conversation.user2,
             messages=messages,
             created_at=conversation.created_at
         )
-        return conversation
+        return conversation_rs
 
     
     async def get_message(self, message_id:str) -> Category:

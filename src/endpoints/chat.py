@@ -1,11 +1,15 @@
 from fastapi import (Request, Depends, status, Response, Form)
-from typing import Optional
+from typing import Optional, List
 from src.models.managers.category import CategoryManager
 from src.models.managers.chat import ChatManager
 from src.models.managers.job import JobManager
 from src.models.managers.geolocation import GeolocationManager
 from src.models.managers.user import UserManager
-from src.models.chat import ChatConversation, ChatConversationrRequestResponse, SendChatMessageManagerData
+from src.models.chat import (
+    ChatConversation, 
+    ChatConversationRequestResponse, 
+    SendChatMessageManagerData
+)
 from src.endpoints.setup import app, fastapi_users
 from src.models.user import User
 from src.models.chat import SendChatMessageSerializer
@@ -27,6 +31,14 @@ async def get_jobs(
     jobs = await job_manager.get_jobs()
     return jobs
 
+@app.get(ENDPOINT+'/chat/user/conversation', status_code=status.HTTP_200_OK)
+async def get_user_chat_conversations(
+    response: Response,
+    user: User = Depends(fastapi_users.current_user()), 
+    chat_manager: ChatManager = Depends(ChatManager)
+):
+    chat_conversations:List[ChatConversationRequestResponse] = await  chat_manager.get_user_conversations_with_messages(user_id=user.id)
+    return chat_conversations
 
 @app.get(ENDPOINT+'/chat/conversation/{conversation_id}', status_code=status.HTTP_200_OK)
 async def get_chat_conversation(
@@ -35,7 +47,7 @@ async def get_chat_conversation(
     user: User = Depends(fastapi_users.current_user()), 
     chat_manager: ChatManager = Depends(ChatManager)
 ):
-    chat_conversation:ChatConversationrRequestResponse = await  chat_manager.get_conversation_with_messages(conversation_id=conversation_id)
+    chat_conversation:ChatConversationRequestResponse = await  chat_manager.get_conversation_with_messages(conversation_id=conversation_id)
     if not chat_conversation:
         #chat conversation not found case
         response.status_code = status.HTTP_404_NOT_FOUND
@@ -58,6 +70,7 @@ async def send_chat_message(
     # check the receiver id
     receiver = await user_db.get(
         id=UUID(serializer.receiver_id))
+    pdb.set_trace()
     if receiver is None:
         # receiver not found
         response.status_code = status.HTTP_404_NOT_FOUND

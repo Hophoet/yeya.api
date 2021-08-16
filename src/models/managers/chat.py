@@ -210,7 +210,7 @@ class ChatManager(DBManager):
         return conversation_rs
 
     
-    async def get_message(self, message_id:str) -> Category:
+    async def get_message(self, message_id:str) -> ChatMessage:
         """ get message by id request """
         await self.connect_to_database()
         message_q = await self.db['chatMessages'].find_one({
@@ -219,7 +219,7 @@ class ChatManager(DBManager):
         if  message_q:
             return await self.serializeMessage(message_q)
 
-    async def get_conversation(self, conversation_id:str) -> Category:
+    async def get_conversation(self, conversation_id:str) -> int:
         """ get conversation by id request """
         await self.connect_to_database()
         conversation_q = await self.db['chatConversations'].find_one({
@@ -243,6 +243,17 @@ class ChatManager(DBManager):
             })
         return  result.modified_count
 
+    async def delete_message_by_sender(self, sender_id:str, message_id:str) -> int:
+        """ delete conversation message by the sender request """
+        await self.connect_to_database()
+        result = await self.db['chatMessages'].delete_one(
+           {
+               '$and':[
+                    {'_id': ObjectId(message_id) },
+                    {'sender_id': str(sender_id)},
+               ]
+           })
+        return result.deleted_count
 
     async def get_category(self, category_id:str) -> Category:
         """ get category by id request """

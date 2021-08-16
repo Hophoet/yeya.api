@@ -86,7 +86,7 @@ class ChatManager(DBManager):
             'text':str(message_q['text']),
             'image':message_q['image'],
             'receiver':receiver,    
-            'sender':receiver,    
+            'sender':sender,    
             'created_at':str(message_q['created_at']),
             'read':message_q['read'],
         }
@@ -129,15 +129,11 @@ class ChatManager(DBManager):
 
         chat_conversation_id:str = None
         chat_conversation = await self.db['chatConversations'].find_one({
-            'user1_id': data.sender_id,
-            'user2_id': data.receiver_id
+            '$or':[
+                {'user1_id': str(data.sender_id), 'user2_id': str(data.receiver_id)},
+                {'user1_id': str(data.receiver_id), 'user2_id': str(data.sender_id)},
+            ]
         })
-        if not chat_conversation:
-            chat_conversation = await self.db['chatConversations'].find_one({
-                'user1_id': data.receiver_id,
-                'user2_id': data.sender_id
-            })
-
         if not chat_conversation:
             # create a new one
             new_conversation_created = True
@@ -182,8 +178,10 @@ class ChatManager(DBManager):
         """ get user conversations by user id request """
         await self.connect_to_database()
         conversation_qs:List = self.db['chatConversations'].find({
-            'user1_id': str(user_id),
-            # 'user2_id': str(user_id)
+            '$or':[
+                {'user1_id': str(user_id)},
+                {'user2_id': str(user_id)}
+            ]
         })
         # pdb.set_trace()
         conversations_rr:List[ChatConversationRequestResponse] = []
@@ -229,6 +227,22 @@ class ChatManager(DBManager):
         })
         if conversation_q:
             return await self.serializeConversation(conversation_q)
+
+    async def read_conversation_messages_by_receiver(self, receiver_id:str, conversation_id:str) -> Category:
+        """ read conversation messages request """
+        await self.connect_to_database()
+        result = await self.db['chatMessages'].update_many(
+           {
+               '$and':[
+                    {'chat_conversation_id': conversation_id},
+                    {'receiver_id': str(receiver_id)},
+               ]
+           },
+            {
+                '$set':{ 'read': True }
+            })
+        return  result.modified_count
+
 
     async def get_category(self, category_id:str) -> Category:
         """ get category by id request """

@@ -11,7 +11,8 @@ from src.endpoints.job import get_jobs, get_job, insert_job
 from src.endpoints.chat import (
     send_chat_message, 
     get_chat_conversation,
-    read_conversation_messages
+    read_conversation_messages,
+    delete_conversation_message_by_sender
 )
 
 

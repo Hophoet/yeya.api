@@ -35,7 +35,7 @@ class ChatMessageDB(BaseModel):
     created_at: Optional[datetime]
 
 
-class ChatConversationrRequestResponse(BaseModel):
+class ChatConversationRequestResponse(BaseModel):
     """ model use to get conversation with all message"""
     id: str = None
     user1: User

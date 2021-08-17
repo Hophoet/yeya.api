@@ -26,6 +26,7 @@ class UserDB(User, models.BaseUserDB):
 
 class PasswordReset(BaseModel):
     """ users password reset feature model """
+    id:str
     user: User 
     code: Optional[str] = None
     verified: bool = False
@@ -48,3 +49,15 @@ class PasswordResetDB(BaseModel):
 class PasswordResetSerializer(BaseModel):
     """ users password reset feature model """
     email: EmailStr 
+
+class PasswordResetVerificationSerializer(BaseModel):
+    """ users password reset verification serializer model """
+    email: EmailStr 
+    code: str 
+    password: str 
+
+class PasswordResetVerificationManagerData(BaseModel):
+    """ model for the model manager method parameter"""
+    user_id: str 
+    code: str 
+    password: str 

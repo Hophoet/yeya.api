@@ -1,9 +1,10 @@
 
 from os import name
+from datetime import datetime
 from fastapi import (Request, Depends, Body, Form, File, 
                     UploadFile, status, Response)
 from starlette.datastructures import FormData
-from src.models.user import PasswordResetManagerData, User, PasswordResetSerializer
+from src.models.user import PasswordReset, PasswordResetManagerData, PasswordResetVerificationManagerData, PasswordResetVerificationSerializer, User, PasswordResetSerializer
 from src.firebase.functions import upload 
 from src.models.managers.user import UserManager
 from src.models.image import Image
@@ -42,7 +43,12 @@ async def reset_password(
     # get the user
     user:User = await user_manager.get_user_by_email(email=serializer.email)
     if user is None:
-        return 
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'password-reset/user-not-found',
+            'message': 'password reset user not found'
+        }
     reset_code =  ''.join(choice(digits) for i in range(4))
     # create the password reset
     password_reset_manager_data:PasswordResetManagerData = PasswordResetManagerData(
@@ -50,8 +56,73 @@ async def reset_password(
         code =  reset_code
     )
     password_reset_result = await user_manager.create_password_reset(password_reset_manager_data)
+    return password_reset_result
 
-    return {
-        'detail': 'code sended'
-    }
+
+@app.post('/user/verify-password-reset')
+async def verify_password_reset(
+    response: Response,
+    serializer:PasswordResetVerificationSerializer,
+    user_manager: UserManager = Depends(UserManager)
+):
+    # get the user
+    user_q:User = await user_manager.get_user_by_email(email=serializer.email)
+    if user_q is None:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'password-reset-verification/user-not-found',
+            'message': 'password reset verification user not found'
+        }
+    # get password reset 
+    password_reset: PasswordReset = await user_manager.get_password_reset_by_user_id(user_id=user_q['id'])
+    if password_reset is None:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            'status':status.HTTP_400_BAD_REQUEST,
+            'code':'password-reset/request-not-made',
+            'message': 'password reset request not made'
+        }
+
+    if password_reset.verified:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            'status':status.HTTP_400_BAD_REQUEST,
+            'code':'password-reset/new-request-not-made',
+            'message': 'new password reset request not made'
+        }
+
+    if password_reset.code != serializer.code:
+        print('verification code', password_reset.code)
+        print('given code', serializer.code)
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            'status':status.HTTP_400_BAD_REQUEST,
+            'code':'password-reset-verification/invalid-code',
+            'message': 'invalid password reset verification code'
+        }
+    # check the duration
+    now = datetime.now()
+    # get the duration from the created code to now
+    duration = now - password_reset.created_at 
+    duration_seconds = duration.total_seconds()
+    if(duration_seconds > 120):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            'status':status.HTTP_400_BAD_REQUEST,
+            'code':'password-verification/code-expired',
+            'message': 'password reset verification code expired'
+        }
+    # verifiy reset
+    password_reset_result = await user_manager.verify_password_reset(
+        PasswordResetVerificationManagerData(
+            user_id=str(user_q['id']),
+            code=serializer.code,
+            password=serializer.password
+            )
+    )
+    if password_reset_result:
+        return password_reset_result 
+    response.status_code = status.HTTP_400_BAD_REQUEST
+
 

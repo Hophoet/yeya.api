@@ -12,6 +12,7 @@ from .setup import app, fastapi_users
 from pydantic import EmailStr
 from random import choice 
 from string import digits
+from src.utils.email import send_forgot_password_email_async
 import pdb
 
 @app.post('/user/set-image')
@@ -56,6 +57,12 @@ async def reset_password(
         code =  reset_code
     )
     password_reset_result = await user_manager.create_password_reset(password_reset_manager_data)
+    # send email  
+    await send_forgot_password_email_async(
+        'Mot de passe oublié',
+        serializer.email,
+        {'code':reset_code})
+
     return password_reset_result
 
 

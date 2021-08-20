@@ -1,11 +1,13 @@
 from fastapi import (Request, Depends, status, Response, Form)
 from typing import Optional
 from src.models.managers.category import CategoryManager
+from src.models.managers.city import CityManager
 from src.models.managers.job import JobManager
 from src.models.managers.geolocation import GeolocationManager
 from src.models.managers.user import UserManager
 from src.endpoints.setup import app, fastapi_users
 from src.models.user import User
+from src.models.city import City
 from src.models.category import Category, CategoryDB
 from src.models.geolocation import Geolocation, GeolocationDB, GeolocationDBUpdate
 from src.models.job import JobBD, Job, JobCreate, JobUpdate, JobDBUpdate
@@ -48,9 +50,11 @@ async def insert_job(
     job_manager: JobManager = Depends(JobManager),
     user_manager: UserManager = Depends(UserManager),
     category_manager: CategoryManager = Depends(CategoryManager),
+    city_manager: CityManager = Depends(CityManager),
     geolocation_manager: GeolocationManager = Depends(GeolocationManager),
 ):
     category:Category = await category_manager.get_category(job_create.category_id)
+    city:City = await city_manager.get_city(job_create.city_id)
     _user:User = await user_manager.get_user_by_email(user.email)
     geolocation_id:str = None
     if category is None:
@@ -58,7 +62,14 @@ async def insert_job(
         return {
             'status':status.HTTP_404_NOT_FOUND,
             'code':'category/not-found',
-            'message': 'Unauthorized to insert category'
+            'message': 'category not found'
+        }
+    if city is None:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'city/not-found',
+            'message': 'city not found'
         }
     if job_create.geolocation:
         # create the geolocation 
@@ -67,8 +78,10 @@ async def insert_job(
     job_db = JobBD(
         title=job_create.title, 
         description=job_create.description,
+        price=job_create.price,
         user_id=_user.get('id'),
         category_id=category.id,
+        city_id=city.id,
         geolocation_id=geolocation_id
         )
     created_job = await job_manager.insert_job(job_db)
@@ -83,6 +96,7 @@ async def update_job(
     job_manager: JobManager = Depends(JobManager),
     user_manager: UserManager = Depends(UserManager),
     category_manager: CategoryManager = Depends(CategoryManager),
+    city_manager: CityManager = Depends(CityManager),
     geolocation_manager: GeolocationManager = Depends(GeolocationManager),
 ):
     job:Job = await job_manager.get_job(job_update.id)
@@ -107,7 +121,15 @@ async def update_job(
         return {
             'status':status.HTTP_404_NOT_FOUND,
             'code':'category/not-found',
-            'message': 'job not found'
+            'message': 'category not found'
+        }
+    city:City = await city_manager.get_city(job_update.city_id)
+    if city is None:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'city/not-found',
+            'message': 'city not found'
         }
     if job_update.geolocation:
         if job.geolocation:
@@ -129,7 +151,9 @@ async def update_job(
     job_db_update =  JobDBUpdate(
         title=job_update.title, 
         description=job_update.description,
+        price=job_update.price,
         category_id=category.id,
+        city_id=city.id,
         geolocation_id=geolocation_id
     )
     updated_job = await job_manager.update(job_update.id, job_db_update=job_db_update)

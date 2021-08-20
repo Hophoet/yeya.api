@@ -90,7 +90,8 @@ class UserManager(DBManager):
         # create the password reset db object
         password_reset_db:PasswordResetDB = PasswordResetDB(
             user_id=data.user_id,
-            code=data.code
+            code=data.code,
+            created_at=datetime.now()
         )
         password_reset:PasswordReset = await self.get_password_reset_by_user_id(user_id=data.user_id)# self.db['passwordResets'].find_one({'user_id':data.user_id})
         if password_reset:

@@ -7,7 +7,17 @@ from src.database.setup import (SECRET, user_db, db)
 from src.endpoints.setup import app, google_oauth_client, fastapi_users, jwt_authentication
 from src.endpoints.user import set_user_profile_image
 from src.endpoints.category import *
+from src.endpoints.city import (
+    delete_city, 
+    update_city, 
+    insert_city,
+    get_cities,
+    get_city
+)
 from src.endpoints.job import get_jobs, get_job, insert_job
+from src.endpoints.email import send_email_async
+
+
 from src.endpoints.chat import (
     send_chat_message, 
     get_chat_conversation,
@@ -16,8 +26,16 @@ from src.endpoints.chat import (
 )
 
 
-def on_after_register(user: UserDB, request: Request):
-    print(f"User {user.id} has registered.")
+
+async def on_after_register(user: UserDB, request: Request):
+    token = await jwt_authentication._generate_token(user)
+    return {
+        'token':{
+            'value':token,
+            'type': 'bearer'
+        },
+        'user': user
+    }
 
 
 def on_after_forgot_password(user: UserDB, token: str, request: Request):

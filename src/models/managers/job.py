@@ -1,5 +1,6 @@
-from typing import List
+from typing import List, Optional
 from src.models.category import Category
+from src.models.city import City
 from src.models.user import User
 from src.database.manager import DBManager
 from src.database.setup import user_db
@@ -7,6 +8,7 @@ from src.models.geolocation import Geolocation, GeolocationDB, GeolocationDBUpda
 from src.models.job import Job, JobBD, JobUpdate, JobDBUpdate
 from src.models.managers.geolocation import GeolocationManager
 from src.models.managers.category import CategoryManager
+from src.models.managers.city import CityManager
 from src.models.managers.user import UserManager
 from fastapi.encoders import jsonable_encoder
 from src.endpoints.setup import  fastapi_users
@@ -19,22 +21,28 @@ class JobManager(DBManager):
     def __init__(self):
         self.geolocation_manager = GeolocationManager()
         self.category_manager = CategoryManager()
+        self.city_manager = CityManager()
         self.user_manager = UserManager()
         self.collection_name = 'jobs'
     
-    async def serializeOne(self, job_db:JobBD) -> Job:
+    async def serializeOne(self, job_q:dict) -> Job:
         """ job serializer """
-        geolocation:Geolocation = await self.geolocation_manager.get_geolocation(job_db['geolocation_id'])
-        category:Category = await  self.category_manager.get_category(job_db['category_id'])
-        user:User = await  user_db.get(job_db['user_id']) 
+        geolocation:Geolocation = await self.geolocation_manager.get_geolocation(job_q['geolocation_id'])
+        category:Category = await  self.category_manager.get_category(job_q['category_id'])
+        city:City = await  self.city_manager.get_city(city_id=job_q['city_id']) if ('city_id' in job_q.keys()) else None
+        price:Optional[int] = job_q['price'] if ('price' in job_q.keys()) else None
+        user:User = await  user_db.get(job_q['user_id']) 
+
         job:Job = Job(
-            id=str(job_db['_id']),
-            title=str(job_db['title']),
-            description=str(job_db['description']),
+            id=str(job_q['_id']),
+            title=str(job_q['title']),
+            description=str(job_q['description']),
+            price=price,
             user=user,
             category=category,
+            city=city,
             geolocation=geolocation,
-            created_at=str(job_db['created_at']),
+            created_at=str(job_q['created_at']),
         )
         return job
 
@@ -68,6 +76,8 @@ class JobManager(DBManager):
             geolocation = await self.geolocation_manager.get_geolocation(job_db.geolocation_id)
         if job_db.category_id:
             category = await self.category_manager.get_category(job_db.category_id) #self.db['categories'].find_one({'_id':ObjectId(job_db.category_id)})
+        if job_db.city_id:
+            city = await self.city_manager.get_city(city_id=job_db.city_id)
         job:Job =  await self.db['jobs'].insert_one(
             job_db.dict()
         )
@@ -94,8 +104,10 @@ class JobManager(DBManager):
             category = await self.category_manager.get_category(job_db_update.category_id) #self.db['categories'].find_one({'_id':ObjectId(job_db.category_id)})
         data = { 
             'category_id':job_db_update.category_id,
+            'city_id':job_db_update.city_id,
             'title':job_db_update.title,
-            'description':job_db_update.description
+            'description':job_db_update.description,
+            'price':job_db_update.price
         }
         if job_db_update.geolocation_id:
             data['geolocation_id'] = job_db_update.geolocation_id

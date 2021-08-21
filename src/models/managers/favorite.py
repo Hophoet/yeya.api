@@ -57,6 +57,17 @@ class FavoriteManager(DBManager):
         if favorite_q:
             return await self.serializeOne(favorite_q=favorite_q)
 
+    async def get_user_favorite_jobs(self, user_id:str):
+        """ get user favorite jobs request """
+        await self.connect_to_database()
+        favorite_q = await self.db['jobFavorites'].find_one({
+            'user_id': str(user_id)
+        })
+        if favorite_q:
+            favorite:Favorite =  await self.serializeOne(favorite_q=favorite_q)
+            return favorite.jobs
+        return []
+
 
     def _job_exists_in_favorite(self, job_id:str, favorite:Favorite) -> bool:
         for job in favorite.jobs:

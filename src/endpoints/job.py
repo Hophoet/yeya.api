@@ -1,7 +1,9 @@
+from os import set_inheritable
 from fastapi import (Request, Depends, status, Response, Form)
 from typing import Optional
 from src.models.managers.category import CategoryManager
 from src.models.managers.city import CityManager
+from src.models.managers.favorite import FavoriteManager
 from src.models.managers.job import JobManager
 from src.models.managers.geolocation import GeolocationManager
 from src.models.managers.user import UserManager
@@ -11,6 +13,7 @@ from src.models.city import City
 from src.models.category import Category, CategoryDB
 from src.models.geolocation import Geolocation, GeolocationDB, GeolocationDBUpdate
 from src.models.job import JobBD, Job, JobCreate, JobUpdate, JobDBUpdate
+from src.models.favorite import ToggleJobFavorite, ToggleJobFavoriteSerializer, Favorite
 from src.endpoints.setup import ENDPOINT
 
 
@@ -222,3 +225,28 @@ async def set_job_geolocation(
         }
     job = await job_manager.set_location(job_id=job.id, geolocation_db_update=geolocation_db_update) #update(job.id, job_db_update=job_db_update)
     return job
+
+@app.post(ENDPOINT+'/job/toggle-favorite')
+async def toggle_job_favorite(
+    response: Response,
+    serializer:ToggleJobFavoriteSerializer,
+    user: User = Depends(fastapi_users.current_user()), 
+    job_manager: JobManager = Depends(JobManager),
+    user_manager: UserManager = Depends(UserManager),
+    favorite_manager: FavoriteManager = Depends(FavoriteManager)
+):
+    job:Job = await job_manager.get_job(job_id=serializer.job_id)
+    if job is None:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'job/not-found',
+            'message': 'job not found'
+        }
+    # toggle the favorite
+    toggle_job_favorite:ToggleJobFavorite = ToggleJobFavorite(
+        user_id=str(user.id),
+        job_id=serializer.job_id
+        )
+    favorite:Favorite = await favorite_manager.toggle_job_favorite(toggle_job_favorite=toggle_job_favorite)
+    return favorite

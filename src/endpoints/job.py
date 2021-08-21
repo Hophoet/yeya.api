@@ -1,6 +1,6 @@
 from os import set_inheritable
 from fastapi import (Request, Depends, status, Response, Form)
-from typing import Optional
+from typing import List
 from src.models.managers.category import CategoryManager
 from src.models.managers.city import CityManager
 from src.models.managers.favorite import FavoriteManager
@@ -250,3 +250,13 @@ async def toggle_job_favorite(
         )
     favorite:Favorite = await favorite_manager.toggle_job_favorite(toggle_job_favorite=toggle_job_favorite)
     return favorite
+
+
+@app.get(ENDPOINT+'/user/favorite-jobs')
+async def get_user_favorite_jobs(
+    response: Response,
+    user: User = Depends(fastapi_users.current_user()), 
+    favorite_manager: FavoriteManager = Depends(FavoriteManager)
+):
+    jobs:List[Job] = await favorite_manager.get_user_favorite_jobs(user_id=str(user.id))
+    return jobs

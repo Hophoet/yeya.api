@@ -3,8 +3,7 @@ from fastapi import (Request, Depends, status, Response, Form)
 from typing import List
 from src.models.managers.category import CategoryManager
 from src.models.managers.city import CityManager
-from src.models.managers.favorite import FavoriteManager
-from src.models.managers.job import JobManager
+from src.models.managers.job import JobManager, FavoriteManager
 from src.models.managers.geolocation import GeolocationManager
 from src.models.managers.user import UserManager
 from src.endpoints.setup import app, fastapi_users
@@ -25,7 +24,6 @@ async def get_jobs(
 ):
     jobs = await job_manager.get_jobs()
     return jobs
-
 
 @app.get(ENDPOINT+'/job/{job_id}', status_code=status.HTTP_200_OK)
 async def get_job(

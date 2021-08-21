@@ -58,30 +58,30 @@ class FavoriteManager(DBManager):
             return await self.serializeOne(favorite_q=favorite_q)
 
 
-    def _job_exists_in_favorite(job_id:str, favorite:Favorite) -> bool:
+    def _job_exists_in_favorite(self, job_id:str, favorite:Favorite) -> bool:
         for job in favorite.jobs:
             if job.id == job_id:
                 return True
         return False
 
 
-    def _get_favorite_db_from_favorite(favorite:Favorite) -> FavoriteDB:
+    def _get_favorite_db_from_favorite(self, favorite:Favorite) -> FavoriteDB:
         """  """
         return FavoriteDB(
             id=favorite.id,
-            user_id=favorite.user.id,
-            jobs_ids=[job_id for job_id in favorite.jobs]
+            user_id=str(favorite.user.id),
+            jobs_ids=[job_id.id for job_id in favorite.jobs]
         )
 
 
-    def _remove_job_from_favorite(job_id:str, favorite:Favorite) -> Favorite:
+    def _remove_job_from_favorite(self, job_id:str, favorite:Favorite) -> Favorite:
         for job in favorite.jobs:
             if job.id == job_id:
                 # remove it
                 favorite.jobs.remove(job)
         return favorite
 
-    def _add_job_to_favorite(job:Job, favorite:Favorite) -> Favorite:
+    def _add_job_to_favorite(self, job:Job, favorite:Favorite) -> Favorite:
         favorite.jobs.append(job)
         return favorite
                 
@@ -93,7 +93,6 @@ class FavoriteManager(DBManager):
         # get uer favorite
         favorite:Favorite = await self.get_or_create_user_favorite(user_id=toggle_job_favorite.user_id)
         # check if the job exist in the favorite
-        pdb.set_trace()
         if self._job_exists_in_favorite(
             job_id=toggle_job_favorite.job_id,
             favorite=favorite):
@@ -104,7 +103,7 @@ class FavoriteManager(DBManager):
 
         else:
             # add job to the favorite
-            job:Job = self.job_manager.get_job(job_id=toggle_job_favorite.job_id)
+            job:Job = await self.job_manager.get_job(job_id=toggle_job_favorite.job_id)
             favorite = self._add_job_to_favorite(job=job, favorite=favorite)
 
         # update the favorite
@@ -117,7 +116,8 @@ class FavoriteManager(DBManager):
         
     async def update_favorite(self, favorite_db:FavoriteDB) -> Favorite:
         await self.connect_to_database()
-        favorite = await self.db['jobFavorites'].find_one({'_id':ObjectId(favorite_db)})
+        favorite = await self.db['jobFavorites'].find_one({'_id':ObjectId(favorite_db.id)})
+        # pdb.set_trace()
         if favorite:
             updated_favorite =  await self.db['jobFavorites'].update_one(
                 {'_id': ObjectId(favorite_db.id)}, {'$set': favorite_db.dict() }

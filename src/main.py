@@ -25,6 +25,13 @@ from src.endpoints.chat import (
     delete_conversation_message_by_sender
 )
 
+from src.endpoints.proposal import (
+    delete_proposal,
+    get_proposal,
+    get_proposals,
+    insert_proposal,
+    delete_proposal
+)
 
 
 async def on_after_register(user: UserDB, request: Request):

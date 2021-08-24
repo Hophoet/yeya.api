@@ -27,6 +27,16 @@ async def get_proposals(
     proposals:List[Proposal] = await proposal_manager.get_proposals()
     return proposals
 
+@app.get(f'{ENDPOINT}/user/jobs/proposals', status_code=status.HTTP_200_OK)
+async def get_user_jobs_proposals(
+    response: Response,
+    user: User = Depends(fastapi_users.current_user()), 
+    proposal_manager: ProposalManager = Depends(ProposalManager)
+):
+    proposals:List[Proposal] = await proposal_manager.get_by_job_owner_id(user_id=str(user.id))
+    return proposals
+
+
 @app.get(ENDPOINT+'/proposal/{proposal_id}', status_code=status.HTTP_200_OK)
 async def get_proposal(
     response: Response,

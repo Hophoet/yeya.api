@@ -61,6 +61,15 @@ class ProposalManager(DBManager):
         })
         if proposal_q :
             return await self.serializeOne(proposal_q)
+
+    async def get_by_job_owner_id(self, user_id:str) -> List[Proposal]:
+        """ get proposal by job owner id """
+        await self.connect_to_database()
+        proposals:List[Proposal] = await self.get_proposals()
+        # filter the proposal
+        user_jobs_proposals:List[Proposal] = [ proposal for proposal in proposals if str(proposal.job.user.id) == (user_id) ]
+        return user_jobs_proposals
+
                   
     async def insert_proposal(self, proposal_db:ProposalDB) -> Proposal:
         """ insert new proposal request """

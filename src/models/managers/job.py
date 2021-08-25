@@ -15,6 +15,7 @@ from src.models.managers.user import UserManager
 from fastapi.encoders import jsonable_encoder
 from src.endpoints.setup import  fastapi_users
 import pdb
+from uuid import UUID
 from bson import ObjectId
 
 class JobManager(DBManager):
@@ -34,9 +35,8 @@ class JobManager(DBManager):
         category:Category = await  self.category_manager.get_category(job_q['category_id'])
         city:City = await  self.city_manager.get_city(city_id=job_q['city_id']) if ('city_id' in job_q.keys()) else None
         price:Optional[int] = job_q['price'] if ('price' in job_q.keys()) else None
-        user:User = await  user_db.get(job_q['user_id']) 
+        user:User = await  self.user_manager.get_user(user_id=job_q['user_id'])
         favorite_users:List[User] = await favorite_manager.get_job_favorite_users(job_id=str(job_q['_id']))
-
         job:Job = Job(
             id=str(job_q['_id']),
             title=str(job_q['title']),
@@ -56,6 +56,17 @@ class JobManager(DBManager):
         """ get all available job request """
         await self.connect_to_database()
         jobs_db:List[JobBD]= self.db['jobs'].find()
+        jobs:List[Job] = []
+        async for job_db in jobs_db:
+            jobs.append(await self.serializeOne(job_db))
+        return jobs
+
+    async def get_user_jobs(self, user_id:str) -> List[Job]:
+        """ get user jobs request """
+        await self.connect_to_database()
+        jobs_db:List[dict] = self.db['jobs'].find({
+            'user_id': user_id
+        })
         jobs:List[Job] = []
         async for job_db in jobs_db:
             jobs.append(await self.serializeOne(job_db))

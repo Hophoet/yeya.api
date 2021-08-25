@@ -14,7 +14,12 @@ from src.endpoints.city import (
     get_cities,
     get_city
 )
-from src.endpoints.job import get_jobs, get_job, insert_job
+from src.endpoints.job import (
+    get_jobs, 
+    get_job, 
+    insert_job,
+    get_jobs_with_proposals_conversations
+)
 from src.endpoints.email import send_email_async
 
 
@@ -30,7 +35,8 @@ from src.endpoints.proposal import (
     get_proposal,
     get_proposals,
     insert_proposal,
-    delete_proposal
+    delete_proposal,
+    get_user_jobs_proposals,
 )
 
 

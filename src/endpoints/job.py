@@ -4,6 +4,7 @@ from typing import List
 from src.models.managers.category import CategoryManager
 from src.models.managers.city import CityManager
 from src.models.managers.job import JobManager, FavoriteManager
+from src.models.managers.proposal import ProposalManager
 from src.models.managers.geolocation import GeolocationManager
 from src.models.managers.user import UserManager
 from src.endpoints.setup import app, fastapi_users
@@ -13,6 +14,7 @@ from src.models.category import Category, CategoryDB
 from src.models.geolocation import Geolocation, GeolocationDB, GeolocationDBUpdate
 from src.models.job import JobBD, Job, JobCreate, JobUpdate, JobDBUpdate
 from src.models.favorite import ToggleJobFavorite, ToggleJobFavoriteSerializer, Favorite
+from src.models.proposal import JobsProposalsAndConversation
 from src.endpoints.setup import ENDPOINT
 
 
@@ -80,7 +82,7 @@ async def insert_job(
         title=job_create.title, 
         description=job_create.description,
         price=job_create.price,
-        user_id=_user.get('id'),
+        user_id=str(_user.get('id')),
         category_id=category.id,
         city_id=city.id,
         geolocation_id=geolocation_id
@@ -258,3 +260,15 @@ async def get_user_favorite_jobs(
 ):
     jobs:List[Job] = await favorite_manager.get_user_favorite_jobs(user_id=str(user.id))
     return jobs
+
+
+@app.get(f'{ENDPOINT}/jobs-with-proposals-conversation', status_code=status.HTTP_200_OK)
+async def get_jobs_with_proposals_conversations(
+    response: Response,
+    user: User = Depends(fastapi_users.current_user()), 
+    proposal_manager: ProposalManager = Depends(ProposalManager)
+):
+    jobs_proposals_and_conversations: List[JobsProposalsAndConversation] = await proposal_manager.get_user_jobs_with_there_proposal_and_chat_conversation(
+        user_id=str(user.id)
+    )
+    return jobs_proposals_and_conversations

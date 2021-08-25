@@ -3,6 +3,7 @@ from src.database.manager import DBManager
 from src.models.category import Category, CategoryDB
 from fastapi.encoders import jsonable_encoder
 from bson import ObjectId
+import pdb
 
 class CategoryManager(DBManager):
     """ Category model requests manager """
@@ -30,7 +31,6 @@ class CategoryManager(DBManager):
         categories_db:List[CategoryDB]= self.db['categories'].find()
         categories:List[Category] = []
         async for category_db in categories_db:
-            print(category_db)
             categories.append(self.serializeOne(category_db))
         return categories
 

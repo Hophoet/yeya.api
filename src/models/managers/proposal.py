@@ -1,8 +1,10 @@
 from typing import List, Optional
-from src.models.proposal import Proposal, ProposalDB
+from src.models.chat import ChatConversationRequestResponse, CreateChatConversationManagerData
+from src.models.proposal import Proposal, ProposalDB, JobsProposalsAndConversation
 from src.models.user import User, UserDB
 from src.database.manager import DBManager
 from src.models.managers.job import JobManager
+from src.models.managers.chat import ChatManager
 from src.database.setup import user_db
 from src.models.job import Job
 from src.models.managers.user import UserManager
@@ -16,6 +18,7 @@ class ProposalManager(DBManager):
     def __init__(self):
         self.job_manager = JobManager()
         self.user_manager = UserManager()
+        self.chat_manager = ChatManager()
     
     async def serializeOne(self, proposal_q:dict) -> Proposal:
         """ job proposal serializer """
@@ -30,6 +33,34 @@ class ProposalManager(DBManager):
             user=user,
         )
         return proposal
+
+    async def get_user_jobs_with_there_proposal_and_chat_conversation(self, user_id:str) -> List[JobsProposalsAndConversation]:
+        """ get all available job proposals and conversation request """
+        await self.connect_to_database()
+        # get the user
+        job_user:User = await self.user_manager.get_user(user_id=user_id)
+        # get the user jobs
+        jobs:List[Job] = await self.job_manager.get_user_jobs(user_id=str(user_id))
+        # 
+        jobs_proposals_conversations:List[JobsProposalsAndConversation] = []
+        for job in jobs:
+            # get the job proposals
+            job_proposals:List[Proposal] = await self.get_proposals_by_job_id(job_id=job.id)
+            for proposal in job_proposals:
+                # get conversation between the job owner and the proposal user
+                conversation_with_messages:ChatConversationRequestResponse = await self.chat_manager.create_or_get_conversation_with_messages(
+                    CreateChatConversationManagerData(
+                        user1_id=str(job_user.id),
+                        user2_id=str(proposal.user.id)
+                    )
+                )
+                jobs_proposals_conversations.append(
+                    JobsProposalsAndConversation(
+                        job=job, 
+                        proposal=proposal, 
+                        conversation=conversation_with_messages )
+                )
+        return jobs_proposals_conversations
 
 
     async def get_proposals(self) -> List[Job]:
@@ -49,6 +80,17 @@ class ProposalManager(DBManager):
         })
         if proposal_q :
             return await self.serializeOne(proposal_q)
+
+    async def get_proposals_by_job_id(self, job_id:str) -> List[Proposal]:
+        """ get proposal by id request """
+        await self.connect_to_database()
+        proposals_q:List[dict] = self.db['proposals'].find({
+            'job_id': job_id 
+        })
+        proposals:List[Proposal] = []
+        async for proposal_q in proposals_q:
+            proposals.append(await self.serializeOne(proposal_q))
+        return proposals
 
     async def get_by_user_id_and_job_id(self, user_id:str, job_id:str) -> Proposal:
         """ get proposal by user id & job id request """

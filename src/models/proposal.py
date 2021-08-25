@@ -12,6 +12,7 @@ from .geolocation import Geolocation, GeolocationCreate
 from .city import City
 from .job import Job, JobBD, JobCreate
 from .user import User
+from .chat import ChatConversation, ChatConversationRequestResponse
 
 class Proposal(BaseModel):
     id: str = None
@@ -30,3 +31,8 @@ class ProposalDB(BaseModel):
 class CreateProposalSerializer(BaseModel):
     job_id: str
     text: str
+
+class JobsProposalsAndConversation(BaseModel):
+    job:Job
+    proposal:Proposal
+    conversation: ChatConversationRequestResponse

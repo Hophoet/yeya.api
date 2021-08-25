@@ -118,6 +118,42 @@ class ChatManager(DBManager):
             chat_conversation_db.dict()
         )
         return chat_conversation
+    
+    async def create_or_get_conversation_with_messages(self, data:CreateChatConversationManagerData) -> ChatConversationRequestResponse:
+        """ send message request """
+        await self.connect_to_database()
+        chat_conversation_db =  ChatConversationDB(
+            user1_id=data.user1_id,
+            user2_id=data.user2_id
+        )
+
+        chat_conversation_q = await self.db['chatConversations'].find_one({
+            '$or':[
+                {'user1_id': str(data.user1_id), 'user2_id': str(data.user2_id)},
+                {'user1_id': str(data.user2_id), 'user2_id': str(data.user1_id)},
+            ]
+        })
+        conversation_id:str = None
+        if not chat_conversation_q:
+            created_chat_conversation =  await self.db['chatConversations'].insert_one(
+                chat_conversation_db.dict()
+            )
+            conversation_id = created_chat_conversation.inserted_id
+        else:
+            conversation_id = chat_conversation_q['_id']
+        # get the conversation
+        conversation:ChatConversation = await self.get_conversation(conversation_id=conversation_id)
+        # get the converstions with messages
+        messages:List[any] = await self.get_conversation_messages(conversation_id=conversation_id)
+
+        conversation_rs:ChatConversationRequestResponse = ChatConversationRequestResponse(
+            id=str(conversation_id),
+            user1=conversation.user1,
+            user2=conversation.user2,
+            messages=messages,
+            created_at=conversation.created_at
+        )
+        return conversation_rs
 
 
     async def send_message(self, data:SendChatMessageManagerData):

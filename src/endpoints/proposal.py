@@ -1,4 +1,3 @@
-from os import set_inheritable
 from fastapi import (Request, Depends, status, Response, Form)
 from typing import List
 from src.models.managers.category import CategoryManager

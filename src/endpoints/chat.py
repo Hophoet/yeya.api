@@ -32,7 +32,7 @@ async def get_jobs(
     jobs = await job_manager.get_jobs()
     return jobs
 
-@app.get(ENDPOINT+'/chat/user/conversation', status_code=status.HTTP_200_OK)
+@app.get(ENDPOINT+'/chat/user/conversations', status_code=status.HTTP_200_OK)
 async def get_user_chat_conversations(
     response: Response,
     user: User = Depends(fastapi_users.current_user()), 

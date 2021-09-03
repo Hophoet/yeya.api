@@ -4,7 +4,7 @@ from pydantic import BaseModel, UUID4
 from typing import Optional, List
 from enum import Enum
 
-from pydantic.utils import T
+
 from .user import User
 from .category import Category
 from pydantic import UUID4, BaseModel, EmailStr, validator
@@ -32,7 +32,11 @@ class CreateProposalSerializer(BaseModel):
     job_id: str
     text: str
 
+
+class ProposalConversation(BaseModel):
+    proposal:Proposal
+    conversation:ChatConversationRequestResponse
+
 class JobsProposalsAndConversation(BaseModel):
     job:Job
-    proposal:Proposal
-    conversation: ChatConversationRequestResponse
+    proposals_conversations:List[ProposalConversation]

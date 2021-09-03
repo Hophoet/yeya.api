@@ -38,6 +38,9 @@ from src.endpoints.proposal import (
     delete_proposal,
     get_user_jobs_proposals,
 )
+from src.endpoints.message import (
+    send_improvement_message
+)
 
 
 async def on_after_register(user: UserDB, request: Request):

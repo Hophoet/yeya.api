@@ -1,6 +1,6 @@
 from typing import List, Optional
 from src.models.chat import ChatConversationRequestResponse, CreateChatConversationManagerData
-from src.models.proposal import Proposal, ProposalDB, JobsProposalsAndConversation
+from src.models.proposal import Proposal, ProposalDB, JobsProposalsAndConversation, ProposalConversation
 from src.models.user import User, UserDB
 from src.database.manager import DBManager
 from src.models.managers.job import JobManager
@@ -46,6 +46,8 @@ class ProposalManager(DBManager):
         for job in jobs:
             # get the job proposals
             job_proposals:List[Proposal] = await self.get_proposals_by_job_id(job_id=job.id)
+            # proposals_conversations
+            proposals_conversations:List[ProposalConversation] = []
             for proposal in job_proposals:
                 # get conversation between the job owner and the proposal user
                 conversation_with_messages:ChatConversationRequestResponse = await self.chat_manager.create_or_get_conversation_with_messages(
@@ -54,12 +56,18 @@ class ProposalManager(DBManager):
                         user2_id=str(proposal.user.id)
                     )
                 )
-                jobs_proposals_conversations.append(
-                    JobsProposalsAndConversation(
-                        job=job, 
-                        proposal=proposal, 
-                        conversation=conversation_with_messages )
-                )
+                # proposal_conversation
+                proposal_conversation:ProposalConversation = ProposalConversation(
+                    proposal=proposal,
+                    conversation=conversation_with_messages)
+
+                proposals_conversations.append(proposal_conversation)
+
+            jobs_proposals_conversations.append(
+                JobsProposalsAndConversation(
+                    job=job, 
+                    proposals_conversations=proposals_conversations)
+            )
         return jobs_proposals_conversations
 
 

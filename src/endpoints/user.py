@@ -4,7 +4,15 @@ from datetime import datetime
 from fastapi import (Request, Depends, Body, Form, File, 
                     UploadFile, status, Response)
 from starlette.datastructures import FormData
-from src.models.user import PasswordReset, PasswordResetManagerData, PasswordResetVerificationManagerData, PasswordResetVerificationSerializer, User, PasswordResetSerializer
+from src.models.user import (
+    PasswordReset, 
+    PasswordResetManagerData, 
+    PasswordResetVerificationManagerData, 
+    PasswordResetVerificationSerializer, 
+    User, 
+    PasswordResetSerializer,
+    UpdateUserInfosSerializer
+)
 from src.firebase.functions import upload 
 from src.models.managers.user import UserManager
 from src.models.image import Image
@@ -133,3 +141,27 @@ async def verify_password_reset(
     response.status_code = status.HTTP_400_BAD_REQUEST
 
 
+
+@app.put('/user/update')
+async def update_user_infos(
+    response: Response,
+    serializer: UpdateUserInfosSerializer,
+    user: User = Depends(fastapi_users.current_user()),
+    user_manager: UserManager = Depends(UserManager)
+):
+    user_q = user_manager.get_user(str(user.id))
+    if not user_q:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            'status':status.HTTP_404_NOT_FOUND,
+            'code':'user/not-found',
+            'detail':'user not found'
+        }
+    return await user_manager.update_infos(
+        id=str(user.id),
+        email=user.email,
+        last_name=serializer.last_name,
+        first_name=serializer.first_name,
+        phone_number=serializer.phone_number,
+        about=serializer.about
+    )

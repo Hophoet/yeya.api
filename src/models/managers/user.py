@@ -50,6 +50,31 @@ class UserManager(DBManager):
         else:
             print('user not  found')
 
+    async def update_infos(self, 
+        id:str, 
+        email:str, 
+        about:str, 
+        first_name:str, 
+        last_name:str, 
+        phone_number:str) -> User:
+        await self.connect_to_database()
+        user_q = await user_db.get(id=UUID(id))  
+        if user_q:
+            data = {
+                'about':about,
+                'first_name':first_name,
+                'last_name':last_name,
+                'phone_number':phone_number,
+            }
+            updated_user =  await self.db['users'].update_one(
+                {'email': email}, {'$set': data}
+            )
+            if updated_user:
+                updated_user = await user_db.get(id=UUID(id))  
+                return updated_user
+        else:
+            print('user not  found')
+
     async def get_user(self, user_id:UUID4) -> User:
         """ get geolocation by id request """
         await self.connect_to_database()

@@ -10,6 +10,10 @@ from src.models.image import Image
 
 class User(models.BaseUser, models.BaseOAuthAccountMixin):
     image:Optional[Image] = None
+    about:Optional[str] = None
+    first_name:Optional[str] = None
+    last_name:Optional[str] = None
+    phone_number:Optional[str] = None
 
 
 
@@ -61,3 +65,10 @@ class PasswordResetVerificationManagerData(BaseModel):
     user_id: str 
     code: str 
     password: str 
+
+class UpdateUserInfosSerializer(BaseModel):
+    """ user infos update model """
+    about: str
+    first_name: str
+    last_name: str
+    phone_number: str

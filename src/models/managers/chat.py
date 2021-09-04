@@ -51,7 +51,7 @@ class ChatManager(DBManager):
             user1=user1,
             user2=user2,
             messages=messages,
-            created_at=str(conversation_q['created_at'])
+            created_at=conversation_q['created_at']
         )
         return conversation
 
@@ -87,7 +87,7 @@ class ChatManager(DBManager):
             'image':message_q['image'],
             'receiver':receiver,    
             'sender':sender,    
-            'created_at':str(message_q['created_at']),
+            'created_at':message_q['created_at'],
             'read':message_q['read'],
         }
 

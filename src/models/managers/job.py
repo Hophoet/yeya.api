@@ -180,8 +180,9 @@ class FavoriteManager(DBManager):
         job_manager = JobManager()
         user:User = await self.user_manager.get_user(
             user_id=favorite_q['user_id'])
+        # pdb.set_trace()
         jobs:List[Job] = [ 
-            await job_manager.get_job(job_id=id) for id in favorite_q['jobs_ids'] ] 
+            await job_manager.get_job(job_id=id) for id in favorite_q['jobs_ids']  if await job_manager.get_job(job_id=id) ] 
         favorite = Favorite(
             user=user,
             id=str(favorite_q['_id']),

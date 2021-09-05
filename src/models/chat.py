@@ -10,11 +10,13 @@ class ChatConversation(BaseModel):
     user1: User
     user2: User
     created_at: Optional[datetime]
+    updated_at:Optional[datetime] = None
 
 class ChatConversationDB(BaseModel):
     user1_id: str
     user2_id: str
     created_at:Optional[datetime] = datetime.now()
+    updated_at:Optional[datetime] = datetime.now()
 
 class ChatMessage(BaseModel):
     sender: User
@@ -42,6 +44,7 @@ class ChatConversationRequestResponse(BaseModel):
     user2: User
     messages: List
     created_at: Optional[datetime]
+    updated_at: Optional[datetime]
 
 class SendChatMessageSerializer(BaseModel):
     """ model for the endpoint method parameter"""
@@ -61,6 +64,7 @@ class CreateChatConversationManagerData(BaseModel):
     user1_id: str
     user2_id: str
     created_at:Optional[datetime] = datetime.now()
+    updated_at:Optional[datetime] = datetime.now()
 
 class CreateChatMessageManagerData(BaseModel):
     """ model for the model manager method parameter"""

@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime
 from src.models.user import User
 from src.database.manager import DBManager
 from src.models.category import Category, CategoryDB
@@ -35,7 +36,8 @@ class ChatManager(DBManager):
             id=str(conversation_q['_id']),
             user1=user1,
             user2=user2,
-            created_at=conversation_q['created_at']
+            created_at=conversation_q['created_at'],
+            updated_at=conversation_q['updated_at']
         )
         return chat_conversation
     
@@ -51,7 +53,8 @@ class ChatManager(DBManager):
             user1=user1,
             user2=user2,
             messages=messages,
-            created_at=conversation_q['created_at']
+            created_at=conversation_q['created_at'],
+            updated_at=conversation_q['updated_at']
         )
         return conversation
 
@@ -155,7 +158,6 @@ class ChatManager(DBManager):
         )
         return conversation_rs
 
-
     async def send_message(self, data:SendChatMessageManagerData):
         """ send message request """
         await self.connect_to_database()
@@ -192,11 +194,20 @@ class ChatManager(DBManager):
                 )
             )
             if inserted_chat_message:
+                # update the conversation(the updated_at field) 
+                await self.update_chat_conversation(conversation_id=chat_conversation_id)
                 chat_message = await self.db['chatMessages'].find_one(
                 {"_id": inserted_chat_message.inserted_id}
                 )
                 return await self.serializeMessage(chat_message)
         
+    async def update_chat_conversation(self, conversation_id:str) -> List[ChatMessage]:
+        data = {'updated_at': datetime.now()}
+        await self.db['chatConversations'].update_one(
+            {'_id': ObjectId(conversation_id)}, {'$set': data}
+        )
+
+
     async def get_conversation_messages(self, conversation_id:str) -> List[ChatMessage]:
         """ get conversation by id request """
         await self.connect_to_database()

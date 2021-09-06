@@ -1,3 +1,4 @@
+from datetime import datetime
 from os import set_inheritable
 from fastapi import (Request, Depends, status, Response, Form)
 from typing import List
@@ -24,7 +25,7 @@ async def get_jobs(
     user: User = Depends(fastapi_users.current_user()), 
     job_manager: JobManager = Depends(JobManager)
 ):
-    jobs = await job_manager.get_jobs()
+    jobs:List[Job] = await job_manager.get_jobs()
     return jobs
 
 @app.get(ENDPOINT+'/job/{job_id}', status_code=status.HTTP_200_OK)
@@ -85,7 +86,8 @@ async def insert_job(
         user_id=str(_user.get('id')),
         category_id=category.id,
         city_id=city.id,
-        geolocation_id=geolocation_id
+        geolocation_id=geolocation_id,
+        created_at=datetime.now()
         )
     created_job = await job_manager.insert_job(job_db)
     return created_job

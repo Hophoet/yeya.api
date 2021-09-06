@@ -24,6 +24,7 @@ from src.utils.email import send_forgot_password_email_async
 from src.endpoints.setup import ENDPOINT
 import pdb
 
+
 @app.post(ENDPOINT+'/user/set-image')
 async def set_user_profile_image(
     response: Response,
@@ -34,13 +35,8 @@ async def set_user_profile_image(
     url, file_name  = upload(
         file=image.file, 
         old_file_name=user.image.name if user.image else None) 
-    updated_user = await user_manager.set_user_image(
-        email=user.email, image=Image(url=url, name=file_name)) 
-    return {
-        'status':status.HTTP_200_OK,
-        'message': 'user profile image setted successfully!',
-        'data':updated_user
-    }
+    return await user_manager.set_user_image(
+        email=user.email, id=str(user.id), image=Image(url=url, name=file_name)) 
 
 
 @app.post('/user/reset-password')

@@ -190,7 +190,8 @@ class ChatManager(DBManager):
                     receiver_id=data.receiver_id,
                     chat_conversation_id=chat_conversation_id,
                     text=data.text,
-                    image=data.image
+                    image=data.image,
+                    created_at=datetime.now()
                 )
             )
             if inserted_chat_message:

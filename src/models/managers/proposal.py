@@ -25,14 +25,15 @@ class ProposalManager(DBManager):
         job:Job =  await self.job_manager.get_job(job_id=proposal_q['job_id'])
         user:User =  await self.user_manager.get_user(
             user_id=proposal_q['user_id'])
-        proposal:Proposal = Proposal(
-            id=str(proposal_q['_id']),
-            text=str(proposal_q['text']),
-            created_at=str(proposal_q['created_at']),
-            job=job,
-            user=user,
-        )
-        return proposal
+        if job and user:
+            proposal:Proposal = Proposal(
+                id=str(proposal_q['_id']),
+                text=str(proposal_q['text']),
+                created_at=str(proposal_q['created_at']),
+                job=job,
+                user=user,
+            )
+            return proposal
 
     async def get_user_jobs_with_there_proposal_and_chat_conversation(self, user_id:str) -> List[JobsProposalsAndConversation]:
         """ get all available job proposals and conversation request """
@@ -77,7 +78,9 @@ class ProposalManager(DBManager):
         proposals_q:List[dict]= self.db['proposals'].find()
         proposals:List[Proposal] = []
         async for proposal_q in proposals_q:
-            proposals.append(await self.serializeOne(proposal_q))
+            proposal: Proposal = await self.serializeOne(proposal_q) 
+            if proposal:
+                proposals.append(proposal)
         return proposals
 
     async def get_by_id(self, proposal_id:str) -> Proposal:

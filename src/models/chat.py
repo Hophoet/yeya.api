@@ -74,7 +74,7 @@ class CreateChatMessageManagerData(BaseModel):
     text: str
     image: Optional[str] = None
     read: bool = False
-    created_at:Optional[datetime] = datetime.now()
+    created_at: datetime
 
 class GetChatConversationSerializer(BaseModel):
     chat_conversation_id: str

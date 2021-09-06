@@ -18,6 +18,7 @@ class UserManager(DBManager):
     
     def __init__(self):
         super(UserManager, self).__init__()
+        self.user_manager = user_db
 
     async def serializePasswordReset(self, password_q):
         """ message serializer """
@@ -31,7 +32,7 @@ class UserManager(DBManager):
             created_at=password_q['created_at']
         )
 
-    async def set_user_image(self, image:Image, email:str=None, id: UUID4=None) -> User:
+    async def set_user_image(self, image:Image, email:str, id: str) -> User:
         await self.connect_to_database()
         user = await self.db['users'].find_one({'email':email})
         if user:
@@ -40,13 +41,8 @@ class UserManager(DBManager):
                 {'email': email}, {'$set': jsonable_encoder(data)}
             )
             if updated_user:
-                updated_user = await self.db['users'].find_one(
-                    {'email':email})
-                return {
-                    'id': str(updated_user['id']),
-                    'email': updated_user['email'],
-                    'image': updated_user['image'],
-                }
+                updated_user = await user_db.get(id=UUID(id))  
+                return updated_user
         else:
             print('user not  found')
 

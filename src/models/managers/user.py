@@ -74,8 +74,8 @@ class UserManager(DBManager):
     async def get_user(self, user_id:UUID4) -> User:
         """ get geolocation by id request """
         await self.connect_to_database()
-        user_q = await user_db.get(id=UUID(user_id))  
-        return user_q
+        user: User = await user_db.get(id=UUID(user_id))  
+        return user
 
     async def update(self, user:UserDB) -> User:
         """ get geolocation by id request """

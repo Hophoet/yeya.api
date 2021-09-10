@@ -20,7 +20,6 @@ from src.endpoints.job import (
     insert_job,
     get_jobs_with_proposals_conversations
 )
-from src.endpoints.email import send_email_async
 
 
 from src.endpoints.chat import (
